@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Com Port Serial Interchanger</title>
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+	
+	<style>
+	@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+	@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&display=swap');
+	@import url('https://fonts.googleapis.com/css2?family=Commissioner:wght@200&display=swap');
+	@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+
+	body {
+		margin: 0;
+		background-color: #f8f8f881;
+	}
+
+	h1 {
+		font-family: "Montserrat", sans-serif;
+	}
+	
+	label {
+		font-family: Arial, Helvetica, sans-serif;
+	}
+	
+	.small-break {
+		display: block;
+		margin-top: 100px; 
+	}
+	</style>
+</head>
+<body class="w3-container w3-auto">
+    <h1>Com Port Serial Interchanger</h1>
+    
+    <label for="com-ports">COM Port:</label>
+    <select id="com-ports" class="w3-padding-small w3-border w3-round-small w3-border-red w3-small"></select>
+    <button class="w3-button w3-padding-small w3-border w3-round-small w3-border-orange w3-small" onclick="refreshPorts()">Refresh Ports</button>
+	<button class="w3-button w3-padding-small w3-border w3-round-small w3-border-green w3-small" onclick="startMonitoring()">Start Monitoring</button>
+	<button class="w3-button w3-padding-small w3-border w3-round-small w3-border-red w3-small" onClick="window.location.reload();">Reload</button>
+	<hr>
+
+    <p> <label for="latest-command">Latest Command:</label>
+    <input class="w3-padding-small w3-border w3-round-small w3-border w3-small" type="text" id="latest-command" readonly></p>
+	
+    <p> <label for="command-input ">Send Command:</label>
+    <input class="w3-padding-small w3-border w3-round-small w3-border w3-small" type="text" id="command-input">
+    <button class="w3-button w3-padding-small w3-border w3-round-small w3-small" onclick="sendCommand()">Send</button></p>
+	<hr>
+	
+	<p class="w3-text-grey" style="font-size: 0.75em;"> EVG Store 2024 &copy;, Built for Extreme Airsoft &#x2022;
+	<button onclick="document.getElementById('id01').style.display='block'" class="w3-button w3-tiny w3-padding-small w3-border">More Info</button>
+	<button onclick="document.getElementById('id02').style.display='block'" class="w3-button w3-tiny w3-padding-small w3-border">Serial Sounds</button></p>
+	
+	<div id="id01" class="w3-modal">
+		<div class="w3-modal-content">
+			<div class="w3-container">
+				<span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+				<h3>Com Port Serial Interchanger V3.2</h3>
+				<hr>
+				<ul>
+					<li>Built by Elijah & EVG Store 2024</li>
+					<li>Built for Extreme Airsoft's East Field Audio System</li>
+					<li>Built using W3css, Python, Javascript, HTML, and AI text models</li>
+					<li>This is a open source project, check it out at <a href="http://evgelectric.22web.org/pages/projects/arduinoshome">EVG Electric/arduinos</a></li>
+				</ul>			
+			</div>
+		</div>
+	</div>
+	<div id="id02" class="w3-modal">
+		<div class="w3-modal-content">
+			<div class="w3-container">
+				<span onclick="document.getElementById('id02').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+				<h3>Serial Port Audio Command Table</h3>
+				<hr>
+				 <table class="w3-table w3-bordered">
+					<tr>
+						<th>Serial Command</th>
+						<th>Sound Played</th>
+					</tr>
+					<tr>
+						<td>leftB, rightB, buzzer</td>
+						<td>NSL Buzzer (buzzer.wav)</td>
+					</tr>
+					<tr>
+						<td>endgame</td>
+						<td>NSL Endgame (endgame.wav)</td>
+					</tr>
+					<tr>
+						<td>horn</td>
+						<td>NSL Horn (horn.wav)</td>
+					</tr>
+					<tr>
+						<td>weapon</td>
+						<td>NSL Weapon (weapon.wav)</td>
+					</tr>
+					<tr>
+						<td>feet</td>
+						<td>NSL Feet (feet.wav)</td>
+					</tr>
+				</table>
+				<br>
+			</div>
+		</div>
+	</div>
+
+	<!-- SCRIPT START -->
+    <script>
+	var defaultCOMPort = 'COM4'; //SET FOR AUTO LOAD COM PORT
+	
+function refreshPorts() {
+    const select = document.getElementById('com-ports');
+
+    fetch('/list_ports')
+        .then(response => response.json())
+        .then(data => {
+            select.innerHTML = '';
+            data.forEach(port => {
+                const option = document.createElement('option');
+                option.value = port;
+                option.text = port;
+                select.appendChild(option);
+
+                // Set the default selected port
+                if (port === defaultCOMPort) {
+                    option.selected = true;
+                }
+            });
+        });
+}
+		
+
+        function sendCommand() {
+    const command = document.getElementById('command-input').value;
+    fetch('/send_command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `command=${encodeURIComponent(command)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response:', data);
+        if (data.status === 'success') {
+            console.log('Command sent:', data.command);
+        } else {
+            console.error('Error sending command:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Network or server error:', error);
+    });
+}
+
+
+        function getLatestCommand() {
+    fetch('/get_latest_command')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('latest-command').value = data.command || '';
+        });
+}
+
+
+        // Periodically refresh latest command and COM ports
+        setInterval(getLatestCommand, 250);  // Check for new commands every 500 milliseconds
+        setInterval(refreshPorts, 5000);
+
+        // Initial load
+        refreshPorts();
+		
+		function startMonitoring() {
+    const port = document.getElementById('com-ports').value;
+    document.getElementById('latest-command').textContent = ''; // Clear the latest command box when a new port is selected
+    fetch('/start_monitoring', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `port=${encodeURIComponent(port)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log(data.message);
+        } else {
+            console.error('Error starting monitoring:', data.message);
+        }
+    });
+}
+
+
+	function updateSelectedPort() {
+    fetch('/get_monitored_port')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('com-ports');
+            select.value = data.port;
+        });
+}
+
+// Periodically update the selected port
+setInterval(updateSelectedPort, 1000);
+
+window.addEventListener('load', function() {
+    function updateOnlineStatus(event) {
+        var condition = navigator.onLine ? "online" : "offline";
+        if(condition === "offline"){
+            document.getElementById("offlineMessage").style.display = "block";
+        } else {
+            document.getElementById("offlineMessage").style.display = "none";
+        }
+    }
+
+    window.addEventListener('online',  updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+});
+    </script>
+</body>
+</html>
